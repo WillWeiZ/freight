@@ -101,17 +101,45 @@ def create_demo_data():
     st.info("🎯 正在使用演示数据展示系统功能")
 
     # 创建演示的原始数据
-    demo_original = pd.DataFrame({
-        '微信open_id': ['driver_001', 'driver_002', 'driver_003'] * 10,
-        '提交时间': pd.date_range('2025-08-20 08:00:00', periods=30, freq='1H'),
-        '经度': [114.9 + i*0.01 for i in range(30)],
-        '纬度': [25.8 + i*0.01 for i in range(30)],
-        '送货地址': ['赣州市章贡区测试地址' + str(i) for i in range(30)],
-        '匹配分公司名': ['赣州分公司'] * 30,
-        '匹配经度': [114.9] * 30,
-        '匹配纬度': [25.8] * 30,
-        '收货方名称': ['测试客户' + str(i) for i in range(30)]
-    })
+    np.random.seed(42)  # 确保演示数据的一致性
+
+    # 定义不同分公司的基础信息
+    branches = [
+        {'name': '赣州分公司', 'base_lng': 114.9, 'base_lat': 25.8, 'city': '赣州市章贡区'},
+        {'name': '永州分公司', 'base_lng': 111.6, 'base_lat': 26.4, 'city': '永州市冷水滩区'},
+        {'name': '株洲分公司', 'base_lng': 113.1, 'base_lat': 27.8, 'city': '株洲市天元区'}
+    ]
+
+    demo_data = []
+    drivers = ['driver_001', 'driver_002', 'driver_003']
+
+    for i, driver in enumerate(drivers):
+        branch = branches[i]
+        # 每个司机8-12个配送点
+        points_count = np.random.randint(8, 13)
+
+        for j in range(points_count):
+            # 在分公司周围随机分布配送点
+            lng_offset = np.random.normal(0, 0.05)  # 经度偏移
+            lat_offset = np.random.normal(0, 0.05)  # 纬度偏移
+
+            # 时间递增（模拟配送顺序）
+            time_offset = j * np.random.randint(30, 90)  # 每个点间隔30-90分钟
+            delivery_time = pd.to_datetime('2025-08-20 08:00:00') + pd.Timedelta(minutes=time_offset)
+
+            demo_data.append({
+                '微信open_id': driver,
+                '提交时间': delivery_time.strftime('%Y-%m-%d %H:%M:%S'),
+                '经度': branch['base_lng'] + lng_offset,
+                '纬度': branch['base_lat'] + lat_offset,
+                '送货地址': f"{branch['city']}配送点{j+1}号",
+                '匹配分公司名': branch['name'],
+                '匹配经度': branch['base_lng'],
+                '匹配纬度': branch['base_lat'],
+                '收货方名称': f"客户{driver[-3:]}_{j+1:02d}"
+            })
+
+    demo_original = pd.DataFrame(demo_data)
 
     # 创建演示的司机成本数据
     demo_drivers = pd.DataFrame({
@@ -326,7 +354,7 @@ def create_route_map(original_data, selected_drivers=None, map_style="标准地�
                 地址: {row['送货地址']}<br>
                 分公司: {branch_name}
                 """,
-                tooltip=f"配送点 - {row['提交时间'][11:16]}",
+                tooltip=f"配送点 - {pd.to_datetime(row['提交时间']).strftime('%H:%M') if pd.notna(row['提交时间']) else '未知时间'}",
                 color=color,
                 fillColor=color,
                 fillOpacity=0.7
