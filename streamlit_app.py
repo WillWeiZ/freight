@@ -55,121 +55,23 @@ st.markdown("""
 @st.cache_data
 def load_data():
     """加载数据"""
-    import os
-
-    # 获取当前脚本所在目录
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(current_dir, 'data')
-
-    # 数据文件路径
-    original_file = os.path.join(data_dir, '2025-08-20_打卡_已匹配.csv')
-    driver_file = os.path.join(data_dir, '2025-08-20_司机成本分析.csv')
-    branch_file = os.path.join(data_dir, '2025-08-20_分公司汇总.csv')
-
     try:
-        # 检查文件是否存在
-        if not os.path.exists(original_file):
-            st.warning(f"原始数据文件不存在: {original_file}")
-            return create_demo_data()
-
-        # 加载原始匹配数据
-        original_data = pd.read_csv(original_file, encoding='utf-8-sig')
-
-        # 加载司机成本分析数据
-        if os.path.exists(driver_file):
-            driver_costs = pd.read_csv(driver_file, encoding='utf-8-sig')
-        else:
-            st.warning("司机成本分析文件不存在，将使用演示数据")
-            return create_demo_data()
-
-        # 加载分公司汇总数据
-        if os.path.exists(branch_file):
-            branch_summary = pd.read_csv(branch_file, encoding='utf-8-sig')
-        else:
-            st.warning("分公司汇总文件不存在，将使用演示数据")
-            return create_demo_data()
-
+        # 使用相对路径直接读取数据文件
+        original_data = pd.read_csv('data/2025-08-20_打卡_已匹配.csv', encoding='utf-8-sig')
+        driver_costs = pd.read_csv('data/2025-08-20_司机成本分析.csv', encoding='utf-8-sig')
+        branch_summary = pd.read_csv('data/2025-08-20_分公司汇总.csv', encoding='utf-8-sig')
         return original_data, driver_costs, branch_summary
-
+    except FileNotFoundError as e:
+        st.error(f"数据文件未找到: {e}")
+        st.error("请确保以下文件存在于data目录中:")
+        st.error("- data/2025-08-20_打卡_已匹配.csv")
+        st.error("- data/2025-08-20_司机成本分析.csv")
+        st.error("- data/2025-08-20_分公司汇总.csv")
+        return None, None, None
     except Exception as e:
         st.error(f"数据加载错误: {e}")
-        st.info("正在使用演示数据...")
-        return create_demo_data()
+        return None, None, None
 
-def create_demo_data():
-    """创建演示数据"""
-    st.info("🎯 正在使用演示数据展示系统功能")
-
-    # 创建演示的原始数据
-    np.random.seed(42)  # 确保演示数据的一致性
-
-    # 定义不同分公司的基础信息
-    branches = [
-        {'name': '赣州分公司', 'base_lng': 114.9, 'base_lat': 25.8, 'city': '赣州市章贡区'},
-        {'name': '永州分公司', 'base_lng': 111.6, 'base_lat': 26.4, 'city': '永州市冷水滩区'},
-        {'name': '株洲分公司', 'base_lng': 113.1, 'base_lat': 27.8, 'city': '株洲市天元区'}
-    ]
-
-    demo_data = []
-    drivers = ['driver_001', 'driver_002', 'driver_003']
-
-    for i, driver in enumerate(drivers):
-        branch = branches[i]
-        # 每个司机8-12个配送点
-        points_count = np.random.randint(8, 13)
-
-        for j in range(points_count):
-            # 在分公司周围随机分布配送点
-            lng_offset = np.random.normal(0, 0.05)  # 经度偏移
-            lat_offset = np.random.normal(0, 0.05)  # 纬度偏移
-
-            # 时间递增（模拟配送顺序）
-            time_offset = j * np.random.randint(30, 90)  # 每个点间隔30-90分钟
-            delivery_time = pd.to_datetime('2025-08-20 08:00:00') + pd.Timedelta(minutes=time_offset)
-
-            demo_data.append({
-                '微信open_id': driver,
-                '提交时间': delivery_time.strftime('%Y-%m-%d %H:%M:%S'),
-                '经度': branch['base_lng'] + lng_offset,
-                '纬度': branch['base_lat'] + lat_offset,
-                '送货地址': f"{branch['city']}配送点{j+1}号",
-                '匹配分公司名': branch['name'],
-                '匹配经度': branch['base_lng'],
-                '匹配纬度': branch['base_lat'],
-                '收货方名称': f"客户{driver[-3:]}_{j+1:02d}"
-            })
-
-    demo_original = pd.DataFrame(demo_data)
-
-    # 创建演示的司机成本数据
-    demo_drivers = pd.DataFrame({
-        'driver_id': ['driver_001', 'driver_002', 'driver_003'],
-        'branch_name': ['赣州分公司', '永州分公司', '株洲分公司'],
-        'delivery_points_count': [8, 6, 10],
-        'total_distance_km': [45.2, 38.6, 52.1],
-        'delivery_duration_hours': [4.5, 3.8, 5.2],
-        'mileage_cost': [60.5, 51.2, 69.8],
-        'time_cost': [112.5, 95.0, 130.0],
-        'fixed_cost': [200.0, 200.0, 200.0],
-        'total_cost': [373.0, 346.2, 399.8],
-        'avg_cost_per_point': [46.6, 57.7, 40.0],
-        'cost_efficiency': [8.25, 8.97, 7.67]
-    })
-
-    # 创建演示的分公司汇总数据
-    demo_branch = pd.DataFrame({
-        'branch_name': ['赣州分公司', '永州分公司', '株洲分公司'],
-        '司机数量': [1, 1, 1],
-        '总里程': [45.2, 38.6, 52.1],
-        '平均里程': [45.2, 38.6, 52.1],
-        '配送点总数': [8, 6, 10],
-        '总成本': [373.0, 346.2, 399.8],
-        '平均成本': [373.0, 346.2, 399.8],
-        '平均单点成本': [46.6, 57.7, 40.0],
-        '成本效率': [8.25, 8.97, 7.67]
-    })
-
-    return demo_original, demo_drivers, demo_branch
 
 def generate_comprehensive_csv_report(driver_costs, branch_summary, cost_params):
     """生成综合分析报告CSV"""
@@ -513,13 +415,22 @@ def main():
     if original_data is None:
         st.error("无法加载数据，请检查数据文件是否存在")
         st.markdown("""
-        ### 📝 如何使用本系统：
-        1. **本地使用**：确保data目录下有以下文件：
-           - `2025-08-20_打卡_已匹配.csv`
-           - `2025-08-20_司机成本分析.csv`
-           - `2025-08-20_分公司汇总.csv`
-        2. **Streamlit云部署**：需要上传数据文件到仓库的data目录
-        3. **演示模式**：系统会自动生成演示数据供查看功能
+        ### 📝 部署说明：
+
+        **对于Streamlit云部署，请确保以下数据文件已上传到GitHub仓库的data目录中：**
+
+        - `data/2025-08-20_打卡_已匹配.csv`
+        - `data/2025-08-20_司机成本分析.csv`
+        - `data/2025-08-20_分公司汇总.csv`
+        - `data/cost_parameters.json`
+
+        **注意：** 由于.gitignore文件排除了CSV文件，需要手动添加这些文件到仓库：
+        ```bash
+        git add -f data/*.csv
+        git add -f data/*.json
+        git commit -m "添加数据文件用于云部署"
+        git push
+        ```
         """)
         return
 
@@ -529,15 +440,8 @@ def main():
 
     # 加载默认参数
     try:
-        import os
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        params_file = os.path.join(current_dir, 'data', 'cost_parameters.json')
-
-        if os.path.exists(params_file):
-            with open(params_file, 'r', encoding='utf-8') as f:
-                default_params = json.load(f)
-        else:
-            raise FileNotFoundError("参数文件不存在")
+        with open('data/cost_parameters.json', 'r', encoding='utf-8') as f:
+            default_params = json.load(f)
     except:
         # 使用默认参数
         default_params = {
