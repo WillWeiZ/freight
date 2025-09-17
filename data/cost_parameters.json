@@ -1,0 +1,8 @@
+{
+  "fuel_price": 7.5,
+  "fuel_consumption": 8.0,
+  "toll_rate": 0.45,
+  "driver_hourly_wage": 25,
+  "vehicle_depreciation": 150,
+  "insurance_daily": 50
+}

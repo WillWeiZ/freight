@@ -1,0 +1,28 @@
+# 司机配送成本分析系统依赖包
+
+# 核心数据处理
+pandas>=1.5.0
+numpy>=1.21.0
+
+# Web应用框架
+streamlit>=1.28.0
+streamlit-folium>=0.15.0
+
+# 地图可视化
+folium>=0.14.0
+
+# 图表可视化
+plotly>=5.15.0
+
+# 距离计算
+geopy>=2.3.0
+
+# 数据科学
+scikit-learn>=1.1.0
+
+# 图片处理
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# JSON处理
+python-dotenv>=0.19.0
